@@ -150,8 +150,6 @@ def format_record(record):
         "<level>{message}</level>\n"
     )
 
-
-
 logger.remove()
 logger.add(
     sys.stdout,

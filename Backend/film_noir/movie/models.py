@@ -1,14 +1,12 @@
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db.models import Manager
-from django.utils.text import slugify
-
-from movie.constants import MOVIE_POSTERS_PATH, MOVIE_VIDEOS_PATH
-from common.models import Genre, Actor, Director
-
-from typing import Any
 from pathlib import Path
+
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.utils.text import slugify
 from unidecode import unidecode
+
+from common.models import Actor, Director, Genre
+from movie.constants import MOVIE_POSTERS_PATH, MOVIE_VIDEOS_PATH
 
 
 def _poster_upload_path(instance: "Movie", filename: str) -> str:

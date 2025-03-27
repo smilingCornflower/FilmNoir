@@ -1,14 +1,7 @@
-from typing import Self
 from dataclasses import dataclass
 
-from common.value_objects import (
-    GenreVo,
-    ActorVo,
-    DirectorVo,
-    PosterVo,
-    VideoVo,
-)
-from common.type_aliases import IdT, TitleT, DescriptionT, YearT, RatingT, GenreT
+from common.type_aliases import DescriptionT, GenreT, IdT, RatingT, TitleT, YearT
+from common.value_objects import ActorVo, DirectorVo, GenreVo, PosterVo, VideoVo
 
 
 @dataclass(frozen=True)
