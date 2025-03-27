@@ -15,7 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -27,7 +26,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -37,6 +35,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "common",
+    "movie",
 ]
 
 MIDDLEWARE = [
@@ -69,7 +70,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "film_noir.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -79,7 +79,8 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -99,7 +100,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -111,7 +111,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -121,3 +120,52 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+###################
+# CUSTOM SETTINGS #
+###################
+import os
+from dotenv import load_dotenv
+
+load_dotenv(BASE_DIR / ".env")
+
+# DEV or RUN or TEST
+MODE: str = os.getenv("MODE")
+
+########################
+# LOGGER CONFIGURATION #
+########################
+from loguru import logger
+import sys
+
+LOGURU_LOG_LEVEL: str = os.getenv("LOGURU_LOG_LEVEL")
+
+
+def format_record(record):
+    record["extra"]["rel_path"] = Path(record["file"].path).relative_to(BASE_DIR)
+    return (
+        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        "<level>{level:<8}</level> | "
+        "<cyan>{extra[rel_path]}</cyan> | <cyan>{function}</cyan> [<cyan>{line}</cyan>] ---- "
+        "<level>{message}</level>\n"
+    )
+
+
+
+logger.remove()
+logger.add(
+    sys.stdout,
+    format=format_record,
+    level=LOGURU_LOG_LEVEL,
+    backtrace=True,
+    diagnose=True,
+    enqueue=True,
+)
+
+########
+# MYPY #
+########
+if MODE == "DEV":
+    import django_stubs_ext
+
+    django_stubs_ext.monkeypatch()
