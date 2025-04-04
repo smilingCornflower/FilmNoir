@@ -1,5 +1,7 @@
 from django.contrib import admin
-from common.models import Genre, Actor, Director
+from common.models.actor import Actor
+from common.models.genre import Genre
+from common.models.director import Director
 
 
 @admin.register(Genre)

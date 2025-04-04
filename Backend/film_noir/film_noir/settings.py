@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
 
     "common",
-    "content",
     "movie",
+    "serial",
 ]
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

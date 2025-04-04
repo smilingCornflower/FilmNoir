@@ -7,7 +7,9 @@ django.setup()
 
 def add_movie_from_dict(data: dict):
     from movie.models import Movie
-    from common.models import Genre, Actor, Director
+    from common.models.director import Director
+    from common.models.actor import Actor
+    from common.models.genre import Genre
 
     genre_objs = []
     for g in data["genres"]:
