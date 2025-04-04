@@ -1,4 +1,3 @@
-from django.db.models import QuerySet
 from loguru import logger
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,7 +21,7 @@ class MovieView(APIView):
             MovieQueryParamsVoConverter.get_vo_from_query_dict(request.query_params)
         )
         logger.debug(f"converted parameters value object = {params_vo}")
-        movies: QuerySet[Movie] = MovieService.get(params_vo)
+        movies: list[Movie] = MovieService.get(params_vo)
 
         logger.info(f"{len(movies)} items found")
         return Response(MovieSerializer(movies, many=True).data)

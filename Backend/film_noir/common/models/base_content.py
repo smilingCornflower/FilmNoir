@@ -4,7 +4,7 @@ from typing import TypeVar
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
+from common.models.genre import Genre
 from django.utils.text import slugify
 from unidecode import unidecode
 
@@ -31,7 +31,7 @@ class BaseContent(models.Model):
     year = models.PositiveIntegerField()
     rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)])
 
-    genres = models.ManyToManyField("common.genre")
+    genres = models.ManyToManyField(Genre)
     poster = models.ImageField(upload_to=_poster_upload_path)
 
     class Meta:

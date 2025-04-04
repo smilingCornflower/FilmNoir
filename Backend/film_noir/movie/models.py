@@ -1,7 +1,15 @@
-from common.models.base_content import BaseContent
-from movie.constants import MOVIE_VIDEOS_PATH, MOVIE_POSTERS_PATH, MOVIE_CONTENT_TYPE
+from pathlib import Path
 from typing import TypeVar
+
 from django.db import models
+
+from common.models.base_content import BaseContent
+from common.models.actor import Actor
+from common.models.director import Director
+from movie.constants import MOVIE_CONTENT_TYPE, MOVIE_POSTERS_PATH, MOVIE_VIDEOS_PATH
+from django.utils.text import slugify
+from unidecode import unidecode
+
 
 T = TypeVar("T", bound="Movie")
 
@@ -13,8 +21,8 @@ def _video_upload_path(instance: T, filename: str) -> str:
 
 
 class Movie(BaseContent):
-    actors = models.ManyToManyField("common.actor", related_name="movies")
-    director = models.ForeignKey("common.director", related_name="movies", on_delete=models.PROTECT)
+    actors = models.ManyToManyField(Actor, related_name="movies")
+    director = models.ForeignKey(Director, related_name="movies", on_delete=models.PROTECT)
     video = models.FileField(upload_to=_video_upload_path, blank=True, null=True)
 
     def __str__(self) -> str:

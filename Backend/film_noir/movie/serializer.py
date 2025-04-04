@@ -1,27 +1,13 @@
-from typing import Iterable
-
 from rest_framework import serializers
 
+from common.serializer import BaseContentSerializer
 from movie.models import Movie
 
 
-class MovieSerializer(serializers.Serializer[Movie | Iterable[Movie]]):
-    id = serializers.IntegerField()
-    title = serializers.CharField()
-    description = serializers.CharField()
-    year = serializers.IntegerField()
-    rating = serializers.FloatField()
-
-    genres = serializers.SerializerMethodField()
+class MovieSerializer(BaseContentSerializer):
     actors = serializers.SerializerMethodField()
     director = serializers.SerializerMethodField()
-
-    poster = serializers.CharField()
     video = serializers.CharField()
-
-    @staticmethod
-    def get_genres(obj: Movie) -> list[str]:
-        return [genre.name for genre in obj.genres.all()]
 
     @staticmethod
     def get_actors(obj: Movie) -> list[str]:

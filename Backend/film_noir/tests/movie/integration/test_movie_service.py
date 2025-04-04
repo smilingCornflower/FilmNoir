@@ -1,6 +1,8 @@
 from django.test import TestCase
 from movie.models import Movie
-from common.models import Genre, Actor, Director
+from common.models.genre import Genre
+from common.models.actor import Actor
+from common.models.director import Director
 from movie.service import MovieService
 from movie.value_objects import MovieQueryParamsVo, ActorVo, DirectorVo
 

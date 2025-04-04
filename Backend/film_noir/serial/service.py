@@ -1,13 +1,12 @@
 from django.db.models import Q
 
-from common.service import BaseContentService
-from movie.models import Movie
-from movie.value_objects import MovieQueryParamsVo
+from serial.models import Serial
+from serial.value_objects import SerialQueryParamsVo
 
 
-class MovieService(BaseContentService[Movie, MovieQueryParamsVo]):
-    @classmethod
-    def get(cls, params: MovieQueryParamsVo) -> list[Movie]:
+class SerialService:
+    @staticmethod
+    def get(params: SerialQueryParamsVo) -> list[Serial]:
         query = Q()
 
         if params.years:
@@ -18,6 +17,6 @@ class MovieService(BaseContentService[Movie, MovieQueryParamsVo]):
             for actor in params.actors:
                 query |= Q(actors__name=actor.name, actors__surname=actor.surname)
 
-        result = list(Movie.objects.filter(query).distinct())
+        result = list(Serial.objects.filter(query).distinct())
 
         return result

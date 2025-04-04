@@ -10,7 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
+import sys
+from builtins import RuntimeError
 from pathlib import Path
+from typing import Any, Mapping
+
+from dotenv import load_dotenv
+from loguru import logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +31,7 @@ SECRET_KEY = "django-insecure-ve=g=gwu1^ty9&aculol@9opytz-#q!6_)(#-pcn5^*om+11dx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 # Application definition
 
@@ -138,24 +145,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ###################
 # CUSTOM SETTINGS #
 ###################
-import os
-from dotenv import load_dotenv
-
 load_dotenv(BASE_DIR / ".env")
 
 # DEV or RUN or TEST
-MODE: str = os.getenv("MODE")
-
+MODE: str | None = os.getenv("MODE")
+if MODE is None:
+    raise RuntimeError("MODE env var is not set")
 ########################
 # LOGGER CONFIGURATION #
 ########################
-from loguru import logger
-import sys
 
-LOGURU_LOG_LEVEL: str = os.getenv("LOGURU_LOG_LEVEL")
+LOGURU_LOG_LEVEL: str | None = os.getenv("LOGURU_LOG_LEVEL")
+if LOGURU_LOG_LEVEL is None:
+    raise RuntimeError("LOGURU_LOG_LEVEL env var is not set")
 
-
-def format_record(record):
+def format_record(record: Mapping[str, Any]) -> str:
     record["extra"]["rel_path"] = Path(record["file"].path).relative_to(BASE_DIR)
     return (
         "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
@@ -164,7 +168,9 @@ def format_record(record):
         "<level>{message}</level>\n"
     )
 
+
 logger.remove()
+
 logger.add(
     sys.stdout,
     format=format_record,
