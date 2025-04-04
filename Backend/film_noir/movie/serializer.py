@@ -16,6 +16,9 @@ class MovieSerializer(serializers.Serializer[Movie | Iterable[Movie]]):
     actors = serializers.SerializerMethodField()
     director = serializers.SerializerMethodField()
 
+    poster = serializers.CharField()
+    video = serializers.CharField()
+
     @staticmethod
     def get_genres(obj: Movie) -> list[str]:
         return [genre.name for genre in obj.genres.all()]

@@ -4,14 +4,14 @@ from common.models import Genre, Actor, Director
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin[Genre]):
-    pass
+    search_fields = ["name"]
 
 
 @admin.register(Actor)
 class ActorAdmin(admin.ModelAdmin[Actor]):
-    pass
+    search_fields = ["name", "surname"]
 
 
 @admin.register(Director)
 class DirectorAdmin(admin.ModelAdmin[Director]):
-    pass
+    search_fields = ["name", "surname"]
