@@ -28,7 +28,7 @@ class SerialSerializer(BaseContentSerializer):
             episode_vo = EpisodeVo(
                 content_id=obj.id,
                 episode_number=episode.episode_number,
-                episode_path=episode.video.path,
+                episode_path=episode.video.name,
             )
             episodes_vo.append(episode_vo)
         return [asdict(i) for i in episodes_vo]
