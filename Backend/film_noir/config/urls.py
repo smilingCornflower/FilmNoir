@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from film_noir import settings
+from config import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),

@@ -6,7 +6,7 @@ django-stubs = "^5.1.3"
 django-stubs-ext = "^5.1.3"
 
 [project]
-name = "backend"
+name = "film_noir"
 version = "0.1.0"
 description = ""
 authors = [
@@ -21,6 +21,7 @@ dependencies = [
     "loguru (>=0.7.3,<0.8.0) ; python_version >= \"3.12\" and python_version < \"4.0\"",
     "python-dotenv (>=1.1.0,<2.0.0)",
     "drf-spectacular (>=0.28.0,<0.29.0)",
+    "djangorestframework-simplejwt (>=5.5.0,<6.0.0)",
 
 ]
 
@@ -49,4 +50,4 @@ cache_dir = ".mypy_cache"
 exclude = "^migrations/.*"
 
 [tool.django-stubs]
-django_settings_module = "film_noir.settings"
+django_settings_module = "config.settings"
