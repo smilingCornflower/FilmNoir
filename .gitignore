@@ -6,3 +6,6 @@ venv/
 .env
 
 media/
+bar.p
+foo.py
+movie
