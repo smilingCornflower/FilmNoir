@@ -124,7 +124,7 @@ def format_record(record: Mapping[str, Any]) -> str:
         parts = msg.split("=", 1)
         record["extra"]["left"] = parts[0].strip()
         record["extra"]["right"] = parts[1].strip()
-        result = result + "<level>{extra[left]}  =  </level><white>{extra[right]}</white>\n"
+        result = result + "<level>{extra[left]}  =  {extra[right]}</level>\n"
     else:
         result = result + "<level>{message}</level>\n"
     return result
