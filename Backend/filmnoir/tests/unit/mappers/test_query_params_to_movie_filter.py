@@ -1,12 +1,11 @@
-from django.test import TestCase
 from django.http import QueryDict
-
-from domain.value_objects.common import Id, YearVo, RatingVo
-from domain.value_objects.filter import MovieFilter
+from django.test import TestCase
+from application.exceptions.mapping import MappingException
 from application.mappers.query_params_to_movie_filter import (
     QueryParamsToMovieFilterMapper,
 )
-from rest_framework.exceptions import ParseError
+from domain.value_objects.common import Id, RatingVo, YearVo
+from domain.value_objects.filter import MovieFilter
 
 
 class TestQueryParamsToMovieFilterMapper(TestCase):
@@ -63,5 +62,5 @@ class TestQueryParamsToMovieFilterMapper(TestCase):
 
     def test_invalid_data_mapping(self):
         query_params = QueryDict("id=INVALID")
-        with self.assertRaises(ParseError):
+        with self.assertRaises(MappingException):
             QueryParamsToMovieFilterMapper.map(query_params)
