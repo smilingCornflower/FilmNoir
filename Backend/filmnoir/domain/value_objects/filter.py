@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
 from domain.ports.filter import AbstractFilter
-from domain.value_objects.common import Id, YearVo, RatingVo
+from domain.value_objects.common import Id, RatingVo, YearVo
+from domain.value_objects.user import Email, Username
 
 
 @dataclass
@@ -17,4 +18,13 @@ class MovieFilter(AbstractFilter):
     genre_ids: list[Id] | None = None
     actor_ids: list[Id] | None = None
     director_ids: list[Id] | None = None
+
+
+@dataclass
+class UserFilter(AbstractFilter):
+    id_: Id | None = None
+    username: Username | None = None
+    email: Email | None = None
+
+
 

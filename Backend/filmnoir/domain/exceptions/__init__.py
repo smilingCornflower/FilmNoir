@@ -1,3 +1,3 @@
-class BaseDomainException(Exception):
+class DomainException(Exception):
     pass
 

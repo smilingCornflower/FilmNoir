@@ -1,7 +1,7 @@
-from domain.exceptions import BaseDomainException
+from domain.exceptions import DomainException
 
 
-class MediaException(BaseDomainException):
+class MediaException(DomainException):
     pass
 
 
