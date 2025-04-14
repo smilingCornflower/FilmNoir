@@ -6,9 +6,11 @@ from domain.value_objects.common import Id, YearVo, RatingVo
 from domain.value_objects.filter import MovieFilter
 from rest_framework.exceptions import ParseError
 from loguru import logger as log
+from application.ports.mapper import AbstractMapper
+from application.exceptions.mapping import MappingException
 
 
-class QueryParamsToMovieFilterMapper:
+class QueryParamsToMovieFilterMapper(AbstractMapper):
     @classmethod
     def map(cls, query_params: QueryDict) -> MovieFilter:
         """:raises ParseError"""
@@ -16,10 +18,11 @@ class QueryParamsToMovieFilterMapper:
             return cls._map(query_params)
         except ValueError as e:
             log.error(f"Failed to parse query_params: {e}")
-            raise ParseError("Failed to parse URL or query parameters")
+            raise MappingException("Failed to parse URL or query parameters")
 
     @classmethod
     def _map(cls, query_params: QueryDict) -> MovieFilter:
+        """:raises ValueError:"""
         result = MovieFilter()
         if query_params.get("id"):
             result.id_ = Id(int(cast(str, query_params.get("id"))))
