@@ -23,7 +23,7 @@ class TestRegisterEndpoint(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.register_url = "/api/users/register/"
+        cls.register_url = "/api/auth/register/"
         cls.client = Client()
         cls.valid_data = {
             "username": "test_user",

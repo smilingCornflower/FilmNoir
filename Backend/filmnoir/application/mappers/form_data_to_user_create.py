@@ -6,6 +6,7 @@ from domain.value_objects.data import UserCreateData
 from domain.value_objects.user import Email, RawPassword, Username
 from loguru import logger as log
 
+
 class FormDataToUserCreate(AbstractMapper):
     @classmethod
     def _map(cls, form_data: QueryDict) -> UserCreateData:

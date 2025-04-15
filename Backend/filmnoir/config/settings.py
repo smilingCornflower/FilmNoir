@@ -9,7 +9,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR.parent / ".env")
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY: str | None = os.getenv("SECRET_KEY")
+if SECRET_KEY is None:
+    raise RuntimeError("SECRET_KEY variable is not set.")
+
 
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = '/media/'

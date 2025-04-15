@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 import re
 
 CHAR_FIELD_MAX_LENGTH = 255
@@ -17,3 +18,7 @@ PASSWORD_MAX_LENGTH = 128
 # Passwords contains at least one: lowercase letter, uppercase letter and digit
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$")
 
+
+ACCESS_TOKEN_LIFETIME = timedelta(minutes=15)
+REFRESH_TOKEN_LIFETIME = timedelta(days=15)
+JWT_ALGORITHM = "HS256"
