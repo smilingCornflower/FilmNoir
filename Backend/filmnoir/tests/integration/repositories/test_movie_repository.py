@@ -13,8 +13,26 @@ from infrastructure.repositories.movie import DjMovieReadRepository
 
 
 class TestDjMovieReadRepository(TestCase):
+    genre_action: Genre
+    genre_comedy: Genre
+    genre_drama: Genre
+
+    actor_leo: Actor
+    actor_tom: Actor
+    actor_meryl: Actor
+
+    director_nolan: Director
+    director_scorsese: Director
+    director_spielberg: Director
+
+    movie1: Movie
+    movie2: Movie
+    movie3: Movie
+
+    repository: DjMovieReadRepository
+
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls) -> None:
         cls.genre_action = Genre.objects.create(name="action")
         cls.genre_comedy = Genre.objects.create(name="comedy")
         cls.genre_drama = Genre.objects.create(name="drama")
@@ -70,36 +88,36 @@ class TestDjMovieReadRepository(TestCase):
 
         cls.repository = DjMovieReadRepository()
 
-    def test_get_by_id_existing_movie(self):
+    def test_get_by_id_existing_movie(self) -> None:
         result: Movie = self.repository.get_by_id(Id(1))
         self.assertIsInstance(result, Movie)
         self.assertEqual(result.id, 1)
         self.assertEqual(result.title, self.movie1.title)
 
-    def test_get_by_id_non_existing_movie(self):
+    def test_get_by_id_non_existing_movie(self) -> None:
         with self.assertRaises(MovieNotFound):
             self.repository.get_by_id(Id(4))
 
-    def test_gel_all_without_filters(self):
+    def test_gel_all_without_filters(self) -> None:
         result: list[Movie] = self.repository.get_all(MovieFilter())
         self.assertEqual(len(result), 3)
         self.assertSetEqual({i.id for i in result}, {1, 2, 3})
 
-    def test_get_all_with_id_filter(self):
+    def test_get_all_with_id_filter(self) -> None:
         filter_ = MovieFilter()
         filter_.id_ = Id(1)
         result: list[Movie] = self.repository.get_all(filter_)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, self.movie1.title)
 
-    def test_get_all_with_years_filter(self):
+    def test_get_all_with_years_filter(self) -> None:
         filter_ = MovieFilter()
         filter_.years = [YearVo(1994)]
         result: list[Movie] = self.repository.get_all(filter_)
         self.assertEqual(len(result), 2)
         self.assertSetEqual({i.id for i in result}, {2, 3})
 
-    def test_get_all_with_rating_filters(self):
+    def test_get_all_with_rating_filters(self) -> None:
         # Filter with min rating
         filter_ = MovieFilter()
         filter_.min_rating = RatingVo(9.0)
@@ -114,28 +132,28 @@ class TestDjMovieReadRepository(TestCase):
         self.assertEqual(len(result), 2)
         self.assertSetEqual({i.id for i in result}, {1, 3})
 
-    def test_get_all_with_genre_ids_filter(self):
+    def test_get_all_with_genre_ids_filter(self) -> None:
         filter_ = MovieFilter()
         filter_.genre_ids = [Id(self.genre_drama.id), Id(self.genre_comedy.id)]
         result = self.repository.get_all(filter_)
         self.assertEqual(len(result), 2)
         self.assertSetEqual({i.id for i in result}, {2, 3})
 
-    def test_get_all_with_actor_ids_filter(self):
+    def test_get_all_with_actor_ids_filter(self) -> None:
         filter_ = MovieFilter()
         filter_.actor_ids = [Id(self.actor_leo.id)]
         result = self.repository.get_all(filter_)
         self.assertEqual(len(result), 2)
         self.assertSetEqual({i.id for i in result}, {1, 3})
 
-    def test_get_all_with_director_ids_filter(self):
+    def test_get_all_with_director_ids_filter(self) -> None:
         filter_ = MovieFilter()
         filter_.director_ids = [Id(self.director_nolan.id), Id(self.director_spielberg.id)]
         result = self.repository.get_all(filter_)
         self.assertEqual(len(result), 2)
         self.assertSetEqual({i.id for i in result}, {1, 2})
 
-    def test_get_all_with_combined_filters(self):
+    def test_get_all_with_combined_filters(self) -> None:
         filter_ = MovieFilter()
         filter_.min_year = YearVo(1990)
         filter_.max_year = YearVo(2000)
