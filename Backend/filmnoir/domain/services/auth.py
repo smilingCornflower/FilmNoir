@@ -1,135 +1,128 @@
-from dataclasses import asdict
-from datetime import datetime
-from typing import Any
-from domain.value_objects.common import Id
-import jwt
-from domain.exceptions.user import UserNotFoundException
-from domain.constants import (
-    ACCESS_TOKEN_LIFETIME,
-    JWT_ALGORITHM,
-    REFRESH_TOKEN_LIFETIME,
-)
-from domain.enums.token import TokenTypeEnum
-from domain.exceptions.auth import (
-    InvalidAccessTokenException,
-    InvalidRefreshTokenException,
-    InvalidCredentialsException,
+from loguru import logger
+
+from domain.exceptions.auth import InvalidCredentialsException, InvalidTokenException
+from domain.exceptions.user import (
+    EmailAlreadyExistsException,
+    UsernameAlreadyExistsException,
+    UserNotFoundException,
 )
 from domain.models.user import User
-from domain.repositories.user import UserReadRepository
-from domain.value_objects.tokens import (
-    AccessPayload,
+from domain.repositories.user import UserReadRepository, UserWriteRepository
+from domain.services.token import TokenService
+from domain.value_objects.auth import LoginCredentials
+from domain.value_objects.common import Id
+from domain.value_objects.data import UserCreateData
+from domain.value_objects.filter import UserFilter
+from domain.value_objects.token import (
     AccessTokenVo,
     RefreshPayload,
     RefreshTokenVo,
     TokenPairVo,
 )
-from domain.value_objects.auth import LoginCredentials
-from loguru import logger
-
-
-class TokenService:
-    def __init__(self, secret_key: str):
-        self.secret_key = secret_key
-        self.access_token_lifetime = ACCESS_TOKEN_LIFETIME
-        self.refresh_token_lifetime = REFRESH_TOKEN_LIFETIME
-
-    def generate_access_token(self, user: User) -> AccessTokenVo:
-        expires_at: datetime = datetime.now() + self.access_token_lifetime
-        payload = AccessPayload(
-            user_id=user.id,
-            email=user.email,
-            exp=int(expires_at.timestamp()),
-        )
-        logger.debug(f"{payload=}")
-        token: str = jwt.encode(
-            asdict(payload), self.secret_key, algorithm=JWT_ALGORITHM
-        )
-        return AccessTokenVo(value=token, expires_at=expires_at)
-
-    def generate_refresh_token(self, user: User) -> RefreshTokenVo:
-        expires_at: datetime = datetime.now() + self.refresh_token_lifetime
-        payload = RefreshPayload(
-            user_id=user.id,
-            exp=int(expires_at.timestamp()),
-        )
-        logger.debug(f"{payload=}")
-
-        token: str = jwt.encode(
-            asdict(payload), self.secret_key, algorithm=JWT_ALGORITHM
-        )
-        return RefreshTokenVo(value=token, expires_at=expires_at)
-
-    def create_token_pair(self, user: User) -> TokenPairVo:
-        return TokenPairVo(
-            access=self.generate_access_token(user=user),
-            refresh=self.generate_refresh_token(user=user),
-        )
-
-    def verify_access(self, token: AccessTokenVo) -> AccessPayload:
-        """:raises InvalidAccessTokenException:"""
-        try:
-            payload: dict[str, Any] = jwt.decode(
-                token.value, self.secret_key, algorithms=[JWT_ALGORITHM]
-            )
-        except jwt.PyJWTError as e:
-            raise InvalidAccessTokenException(f"Invalid access token: {str(e)}")
-
-        if payload.get("type") != TokenTypeEnum.ACCESS:
-            raise InvalidAccessTokenException("Not an access token.")
-
-        return AccessPayload(
-            user_id=payload["user_id"],
-            email=payload["email"],
-            exp=payload["exp"],
-        )
-
-    def verify_refresh(self, token: RefreshTokenVo) -> RefreshPayload:
-        """:raises InvalidRefreshTokenException:"""
-        try:
-            payload: dict[str, Any] = jwt.decode(
-                token.value, self.secret_key, algorithms=[JWT_ALGORITHM]
-            )
-        except jwt.PyJWTError as e:
-            raise InvalidRefreshTokenException(f"Invalid refresh token: {str(e)}")
-
-        if payload.get("type") != TokenTypeEnum.REFRESH:
-            raise InvalidRefreshTokenException("Not a refresh token.")
-
-        return RefreshPayload(
-            user_id=payload["user_id"],
-            exp=payload["exp"],
-        )
+from domain.value_objects.user import Email, Username
 
 
 class AuthService:
     def __init__(
-        self, token_service: TokenService, user_repository: UserReadRepository
+        self, token_service: TokenService, user_read_repository: UserReadRepository
     ):
         self._token_service = token_service
-        self._user_repository = user_repository
+        self._user_read_repository = user_read_repository
 
     def login(self, credentials: LoginCredentials) -> TokenPairVo:
-        user = self._authenticate_user(credentials)
-        return self._token_service.create_token_pair(user=user)
+        """
+        :raises InvalidCredentialsException:
+        """
+        user: User = self._authenticate_user(credentials=credentials)
+        logger.info(f"User '{credentials.email}' is successfully authenticated.")
+
+        return TokenPairVo(
+            access=self._token_service.generate_access(user=user),
+            refresh=self._token_service.generate_refresh(user=user),
+        )
 
     def reissue_access(self, refresh_token: RefreshTokenVo) -> AccessTokenVo:
-        payload: RefreshPayload = self._token_service.verify_refresh(refresh_token)
-        user: User = self._user_repository.get_by_id(Id(payload.user_id))
-        return self._token_service.generate_access_token(user=user)
+        """
+        :raises InvalidTokenException: If token verification fails
+        """
+        payload: RefreshPayload = self._token_service.verify_refresh(
+            token=refresh_token
+        )
+        try:
+            user: User = self._user_read_repository.get_by_id(Id(payload.sub))
+        except UserNotFoundException:
+            logger.error(f"Failed to find a user with id: {payload.sub}.")
+            raise InvalidTokenException("Invalid access token.")
 
-    def refresh_tokens(self, refresh_token: RefreshTokenVo) -> TokenPairVo:
-        payload: RefreshPayload = self._token_service.verify_refresh(refresh_token)
-        user: User = self._user_repository.get_by_id(Id(payload.user_id))
-        return self._token_service.create_token_pair(user=user)
+        return self._token_service.generate_access(user=user)
+
+    def reissue_refresh(self, refresh_token: RefreshTokenVo) -> RefreshTokenVo:
+        """
+        :raises InvalidTokenException:
+        """
+        payload: RefreshPayload = self._token_service.verify_refresh(
+            token=refresh_token
+        )
+        try:
+            user: User = self._user_read_repository.get_by_id(Id(payload.sub))
+        except UserNotFoundException:
+            logger.error(f"Failed to find a user with id: {payload.sub}.")
+            raise InvalidTokenException("Invalid refresh token.")
+
+        return self._token_service.generate_refresh(user=user)
 
     def _authenticate_user(self, credentials: LoginCredentials) -> User:
-        """:raises InvalidCredentialsException:"""
+        """
+        :raises InvalidCredentialsException:
+        """
         try:
-            user: User = self._user_repository.get_by_email(credentials.email)
+            user: User = self._user_read_repository.get_by_email(credentials.email)
         except UserNotFoundException:
-            raise InvalidCredentialsException("Invalid user or password.")
+            logger.error(f"Failed to find a user with email '{credentials.email}'.")
+            raise InvalidCredentialsException("Invalid email or password.")
 
         if not user.check_password(credentials.password.value):
-            raise InvalidCredentialsException("Invalid user or password.")
+            logger.error(f"Incorrect password for the user {user.email}")
+            raise InvalidCredentialsException("Invalid email or password.")
+
         return user
+
+
+class RegistrationService:
+    def __init__(
+        self,
+        read_repository: UserReadRepository,
+        write_repository: UserWriteRepository,
+    ):
+        self.read_repository = read_repository
+        self.write_repository = write_repository
+
+    def register(self, data: UserCreateData) -> User:
+        """
+        :raises UsernameAlreadyExistsException:
+        :raises EmailAlreadyExistsException:
+        """
+        logger.warning(f"Starting to register a user '{data.email.value}'.")
+        self._check_username_already_exists(data.username)
+        self._check_email_already_exists(data.email)
+
+        user: User = self.write_repository.create(data)
+        logger.info(f"User {user.email} is registered successfully.")
+
+        return user
+
+    def _check_username_already_exists(self, username: Username) -> None:
+        """:raises UsernameAlreadyExistsException:"""
+        result: list[User] = self.read_repository.get_all(UserFilter(username=username))
+        if result:
+            logger.error(f"The username '{username.value}' already in use.")
+            raise UsernameAlreadyExistsException(username.value)
+        logger.debug(f"The username '{username.value}' is free to use.")
+
+    def _check_email_already_exists(self, email: Email) -> None:
+        """:raises EmailAlreadyExistsException:"""
+        result: list[User] = self.read_repository.get_all(UserFilter(email=email))
+        if result:
+            logger.error(f"The email '{email.value}' already in use.")
+            raise EmailAlreadyExistsException(email.value)
+        logger.debug(f"The email '{email.value}' is free to use.")

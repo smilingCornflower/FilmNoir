@@ -1,31 +1,23 @@
-from loguru import logger as log
+from dataclasses import asdict
+
+from loguru import logger
+from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from application.mappers.query_params_to_movie_filter import (
-    QueryParamsToMovieFilterMapper,
-)
-from application.serializers.movie import MovieSerializer
+from typing import cast
+from django.http import QueryDict
+from application.dto.movie import MovieDto
 from application.service_factories.movie import MovieServiceFactory
-from application.services.movie import MovieReadService
-from domain.models.movie import Movie
-from domain.value_objects.filter import MovieFilter
+from application.services.movie import MovieAppService
 
 
 class MovieReadView(APIView):
     @staticmethod
     def get(request: Request) -> Response:
-        log.info(f"{request.query_params}")
+        logger.info(f"request data type = {type(request.query_params)}")  # dict
+        movie_service: MovieAppService = MovieServiceFactory.get_read_service()
+        movies: list[MovieDto] = movie_service.get_all(cast(QueryDict, request.query_params))
+        logger.debug(f"found {len(movies)} movies")
 
-        movie_filter: MovieFilter = QueryParamsToMovieFilterMapper.map(
-            request.query_params
-        )
-        log.debug(f"{movie_filter=}")
-
-        movie_service: MovieReadService = MovieServiceFactory.get_read_service()
-        movies: list[Movie] = movie_service.get_all(movie_filter)
-        log.debug(f"found {len(movies)} movies")
-
-        serializer = MovieSerializer(movies, many=True)
-        return Response(serializer.data)
+        return Response(list(map(asdict, movies)), status=status.HTTP_200_OK)

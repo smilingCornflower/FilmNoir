@@ -1,54 +1,79 @@
-from datetime import datetime
-from typing import Any
+from django.http import QueryDict
+from loguru import logger
 
-from application.exceptions.validation import ApplicationValidationException
-from domain.services.auth import AuthService, TokenService
+from application.converters.request_converters.auth import (
+    request_data_to_login_credentials,
+    request_data_to_user_create,
+)
+from domain.value_objects.token import AccessPayload
+from application.converters.response_converters.auth import token_pair_to_dto, access_token_to_dto, access_payload_to_dto
+from application.dto.auth import TokenPairDto, AccessTokenDto, AccessPayloadDto
+from domain.models.user import User
+from domain.services.auth import AuthService, RegistrationService
+from domain.services.token import TokenService
 from domain.value_objects.auth import LoginCredentials
-from domain.value_objects.tokens import AccessTokenVo, RefreshTokenVo, TokenPairVo, AccessPayload
-from domain.value_objects.user import Email, RawPassword
-from infrastructure.utils.decode_jwt import decode_jwt
+from domain.value_objects.data import UserCreateData
+from domain.value_objects.token import TokenPairVo, AccessTokenVo, RefreshTokenVo
+from application.converters.request_converters.auth import request_data_to_refresh_token, request_data_to_access_token
 
 
 class AuthAppService:
-    def __init__(self, token_service: TokenService, auth_service: AuthService):
-        self._token_service = token_service
+    def __init__(
+        self,
+        auth_service: AuthService,
+        token_service: TokenService,
+    ):
         self._auth_service = auth_service
+        self._token_service = token_service
 
-    def login(self, email_str: str, password_str: str) -> TokenPairVo:
-        try:
-            email = Email(email_str)
-            password = RawPassword(password_str)
-        except ValueError as e:
-            raise ApplicationValidationException(str(e))
+    def login(self, credentials_raw: QueryDict) -> TokenPairDto:
+        """
+        :raises InvalidCredentialsException:
+        :raises ValidationException:
+        """
+        credentials: LoginCredentials = request_data_to_login_credentials(credentials_raw)
+        logger.info(f"Credentials parsed successfully")
 
-        credentials = LoginCredentials(email=email, password=password)
-        return self._auth_service.login(credentials)
+        token_pair: TokenPairVo = self._auth_service.login(credentials)
+        token_pair_dto: TokenPairDto = token_pair_to_dto(token_pair)
+        return token_pair_dto
 
-    def reissue_access(self, refresh_token: str) -> AccessTokenVo:
-        try:
-            decoded: dict[str, Any] = decode_jwt(refresh_token)
-            exp: datetime = decoded["exp"]
-        except ValueError as e:
-            raise ApplicationValidationException(str(e))
+    def reissue_access(self, request_data: QueryDict) -> AccessTokenDto:
+        """
+        :raises ValidationException:
+        :raises InvalidTokenException:
+        """
+        refresh_token: RefreshTokenVo = request_data_to_refresh_token(request_data)
+        access_token: AccessTokenVo = self._auth_service.reissue_access(refresh_token)
+        logger.debug("Access token issued successfully.")
 
-        refresh_token_vo = RefreshTokenVo(value=refresh_token, expires_at=exp)
-        return self._auth_service.reissue_access(refresh_token_vo)
+        access_token_dto: AccessTokenDto = access_token_to_dto(access_token=access_token)
+        return access_token_dto
 
-    def refresh_tokens(self, refresh_token: str) -> TokenPairVo:
-        try:
-            decoded: dict[str, Any] = decode_jwt(refresh_token)
-            exp: datetime = decoded["exp"]
-        except ValueError as e:
-            raise ApplicationValidationException(str(e))
+    def verify_access(self, request_data: QueryDict) -> AccessPayloadDto:
+        """
+        :raises ValidationException:
+        :raises InvalidTokenException:
+        """
+        access_token: AccessTokenVo = request_data_to_access_token(request_data)
+        access_payload: AccessPayload = self._token_service.verify_access(access_token)
+        logger.debug("Access token verified successfully.")
 
-        refresh_token_vo = RefreshTokenVo(value=refresh_token, expires_at=exp)
-        return self._auth_service.refresh_tokens(refresh_token_vo)
+        access_payload_dto: AccessPayloadDto = access_payload_to_dto(access_payload)
+        return access_payload_dto
 
-    def verify_access_token(self, access_token: str) -> AccessPayload:
-        try:
-            decoded: dict[str, Any] = decode_jwt(access_token)
-            exp: datetime = decoded["exp"]
-        except (ValueError, KeyError) as e:
-            raise ApplicationValidationException(str(e))
-        access_token_vo = AccessTokenVo(value=access_token, expires_at=exp)
-        return self._token_service.verify_access(access_token_vo)
+
+class RegistrationAppService:
+    def __init__(self, registration_service: RegistrationService):
+        self._registration_service = registration_service
+
+    def register(self, request_data: QueryDict) -> User:
+        """
+        :raises ValidationException:
+        :raises UsernameAlreadyExistsException:
+        :raises EmailAlreadyExistsException:
+        """
+        user_data: UserCreateData = request_data_to_user_create(data=request_data)
+        user: User = self._registration_service.register(data=user_data)
+
+        return user

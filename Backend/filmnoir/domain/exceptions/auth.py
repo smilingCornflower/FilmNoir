@@ -13,9 +13,5 @@ class InvalidTokenException(AuthException):
     pass
 
 
-class InvalidAccessTokenException(InvalidTokenException):
-    pass
-
-
-class InvalidRefreshTokenException(InvalidTokenException):
+class TokenExpiredException(InvalidTokenException):
     pass

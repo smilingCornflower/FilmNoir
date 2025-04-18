@@ -1,12 +1,12 @@
 import re
 from dataclasses import dataclass
-
+from domain.exceptions.validation import ValidationException
+from domain.exceptions.validation import ValidationException
+from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from domain.constants import (PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH,
                               PASSWORD_PATTERN, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH,
                               USERNAME_PATTERN)
-
-from django.core.validators import EmailValidator
-from django.core.exceptions import ValidationError
 
 
 @dataclass(frozen=True)
@@ -14,12 +14,14 @@ class Username:
     value: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.value, str):
+            raise TypeError("Username value must be str.")
         if not (USERNAME_MIN_LENGTH <= len(self.value) <= USERNAME_MAX_LENGTH):
-            raise ValueError(
+            raise ValidationException(
                 f"Username must be {USERNAME_MIN_LENGTH}-{USERNAME_MAX_LENGTH} chars."
             )
         if not re.match(USERNAME_PATTERN, self.value):
-            raise ValueError("Username contains invalid characters.")
+            raise ValidationException("Username contains invalid characters.")
 
 
 @dataclass(frozen=True)
@@ -27,12 +29,14 @@ class RawPassword:
     value: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.value, str):
+            raise TypeError("RawPassword value must be str.")
         if not (PASSWORD_MIN_LENGTH <= len(self.value) <= PASSWORD_MAX_LENGTH):
-            raise ValueError(
+            raise ValidationException(
                 f"Password must be {PASSWORD_MIN_LENGTH}-{PASSWORD_MAX_LENGTH} chars."
             )
         if not re.match(PASSWORD_PATTERN, self.value):
-            raise ValueError(
+            raise ValidationException(
                 "Password must contain at least one digit, one uppercase letter and one lowercase letter."
             )
 
@@ -40,10 +44,12 @@ class RawPassword:
 @dataclass(frozen=True)
 class Email:
     value: str
-    _validator = EmailValidator()
 
     def __post_init__(self) -> None:
+        if not isinstance(self.value, str):
+            raise TypeError("Email value must be str.")
+        email_validator = EmailValidator()
         try:
-            self._validator(self.value)
-        except ValidationError as _:
-            raise ValueError("Invalid email format.")
+            email_validator(self.value)
+        except ValidationError:
+            raise ValidationException(f"Invalid email address: {self.value}.")

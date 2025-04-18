@@ -117,20 +117,12 @@ if LOGURU_LOG_LEVEL is None:
 
 def format_record(record: Mapping[str, Any]) -> str:
     record["extra"]["rel_path"] = Path(record["file"].path).relative_to(BASE_DIR)
-
-    msg = record["message"]
     result = (
         "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
         "<level>{level:<8}</level> | "
-        "<cyan>{extra[rel_path]}</cyan>[<cyan>{line}</cyan>] (<cyan>{function}</cyan>) ----> "
+        "<cyan>{extra[rel_path]}</cyan>[<cyan>{line}</cyan>] "
+        "(<cyan>{function}</cyan>) ----> <level>{message}</level>\n"
     )
-    if "=" in msg:
-        parts = msg.split("=", 1)
-        record["extra"]["left"] = parts[0].strip()
-        record["extra"]["right"] = parts[1].strip()
-        result = result + "<level>{extra[left]}  =  {extra[right]}</level>\n"
-    else:
-        result = result + "<level>{message}</level>\n"
     return result
 
 

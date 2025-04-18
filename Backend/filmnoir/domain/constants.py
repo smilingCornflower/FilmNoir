@@ -19,6 +19,8 @@ PASSWORD_MAX_LENGTH = 128
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$")
 
 
-ACCESS_TOKEN_LIFETIME = timedelta(minutes=15)
-REFRESH_TOKEN_LIFETIME = timedelta(days=15)
+ACCESS_TOKEN_LIFETIME = 15 * 60             # 15 minutes
+REFRESH_TOKEN_LIFETIME = 15 * 24 * 3600     # 15 days
 JWT_ALGORITHM = "HS256"
+ACCESS_DECODE_OPTIONS = {"verify_signature": True, "require": ["sub", "email", "iat", "exp"]}
+REFRESH_DECODE_OPTIONS = {"verify_signature": True, "require": ["sub", "iat", "exp", "type"]}

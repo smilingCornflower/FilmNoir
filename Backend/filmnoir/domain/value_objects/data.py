@@ -1,17 +1,18 @@
 from dataclasses import dataclass
 
 from domain.ports.data import AbstractCreateData, AbstractUpdateData
-from domain.value_objects.user import Username, Email, RawPassword
 from domain.value_objects.common import Id
+from domain.value_objects.user import Email, RawPassword, Username
 
-@dataclass
+
+@dataclass(frozen=True)
 class UserCreateData(AbstractCreateData):
     username: Username
     email: Email
     password: RawPassword
 
 
-@dataclass
+@dataclass(frozen=True)
 class UserUpdateData(AbstractUpdateData):
     id_: Id
     username: Username | None = None
