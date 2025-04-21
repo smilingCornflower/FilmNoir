@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from domain.exceptions.media import MovieNotFound
 
 from loguru import logger
 from rest_framework import status
@@ -17,7 +18,11 @@ class MovieReadView(APIView):
     def get(request: Request) -> Response:
         logger.info(f"request data type = {type(request.query_params)}")  # dict
         movie_service: MovieAppService = MovieServiceFactory.get_read_service()
-        movies: list[MovieDto] = movie_service.get_all(cast(QueryDict, request.query_params))
+        try:
+            movies: list[MovieDto] = movie_service.get_all(cast(QueryDict, request.query_params))
+        except MovieNotFound as e:
+            return Response({"detail": "Movie not found."}, status=status.HTTP_404_NOT_FOUND)
+
         logger.debug(f"found {len(movies)} movies")
 
         return Response(list(map(asdict, movies)), status=status.HTTP_200_OK)

@@ -1,5 +1,4 @@
 from dataclasses import asdict
-from datetime import datetime
 from typing import cast
 
 from django.http import QueryDict
@@ -9,19 +8,14 @@ from rest_framework.parsers import FormParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from domain.exceptions.auth import InvalidTokenException
-from application.converters.request_converters.auth import request_data_to_user_create
-from application.dto.auth import AccessTokenDto
-from application.dto.auth import TokenPairDto
-from application.exceptions.validation import ApplicationValidationException
+
+from application.dto.auth import AccessPayloadDto, AccessTokenDto, TokenPairDto
 from application.service_factories.auth import AuthServiceFactory, RegistrationServiceFactory
 from application.services.auth import AuthAppService, RegistrationAppService
-from domain.exceptions.auth import InvalidCredentialsException
+from domain.exceptions.auth import InvalidCredentialsException, InvalidTokenException
+from domain.exceptions.user import EmailAlreadyExistsException, UsernameAlreadyExistsException
 from domain.exceptions.validation import ValidationException
-from domain.value_objects.data import UserCreateData
-from domain.value_objects.token import AccessPayload, AccessTokenVo
-from domain.exceptions.user import UsernameAlreadyExistsException, EmailAlreadyExistsException
-from application.dto.auth import AccessPayloadDto
+
 
 class LoginView(APIView):
     parser_classes = [FormParser]
